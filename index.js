@@ -24,11 +24,14 @@ async function createServerFunc(req,res){
     // Calling trimmedPathFunc
     let trimmedPath = await trimmedPathFunc(req,res);
 
+    // Get the HTTP Method
+    let method = req.method.toUpperCase();
+
     //Send the response
     res.end('Hello World\n');
 
     // Log the request path
-    console.log('Request received on path: '+trimmedPath);
+    console.log('Request received on path: '+trimmedPath+' with this method : '+method);
 };
 let server = http.createServer(createServerFunc);
 
