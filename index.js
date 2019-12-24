@@ -7,6 +7,7 @@
 // Dependancies
 const http = require('http');
 const url = require('url');
+const StringDecoder = require('string_decoder').StringDecoder
 
 // The server should respond to all requests with a string
 function trimmedPathFunc(parsedUrl){
@@ -36,11 +37,26 @@ async function createServerFunc(req,res){
         // Get the headers as an object
         let headers = req.headers;
 
-        //Send the response
-        res.end('Hello World\n');
+        // Get the payload, if any
+        let decoder = new StringDecoder('utf-8');
+        let buffer = '';
 
-        // Log the request path
-        console.log('Request received with these headers',headers);
+        req.on('data', (data)=> {
+            buffer += decoder.write(data);
+        });
+
+        req.on('end', ()=>{
+            buffer += decoder.end();
+            
+            //Send the response
+            res.end('Hello World\n');
+
+            // Log the request path
+            console.log('Request received with this payload', buffer);
+        
+        });
+
+        
     } catch (error) {
         console.error(error);
     }
