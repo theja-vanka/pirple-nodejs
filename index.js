@@ -73,8 +73,8 @@ async function createServerFunc(req,res){
                 let payloadString = JSON.stringify(payload);
 
                 // Return the response
+                res.setHeader('Content-Type','application/json');
                 res.writeHead(statusCode);
-                
                 //Send the response
                 res.end(payloadString);
                  // Log the request path
