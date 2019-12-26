@@ -6,11 +6,31 @@
 
 // Dependancies
 const http = require('http');
+const https = require('https');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder
-let config = require('./config');
+const config = require('./config').environmentToExport;
+const httpsServerOptions = require('./config').httpsServerOptions;
 
-// The server should respond to all requests with a string
+// Instantiating the HTTP server
+async function createServerFunc(req,res){
+    await unifiedServer(req,res);
+};
+
+let httpServer = http.createServer(createServerFunc);
+
+// Start the HTTP server
+httpServer.listen(config.httpPort, () => console.log("The server is listening on port "+config.httpPort));
+
+// Instantiating the HTTPS server
+
+let httpsServer = https.createServer(httpsServerOptions,createServerFunc);
+
+// Start the HTTPS server
+httpsServer.listen(config.httpsPort, () => console.log("The server is listening on port "+config.httpsPort));
+
+
+// All the server logic for both the http and https server
 function trimmedPathFunc(parsedUrl){
     
     // Get the path
@@ -20,14 +40,14 @@ function trimmedPathFunc(parsedUrl){
 
 };
 
-async function createServerFunc(req,res){
-    
+let unifiedServer = async function(req,res){
+
     try {
         
         // Get the URL and parse it
         let parsedUrl = url.parse(req.url,true);
 
-        // Calling trimmedPathFunc
+        // Calhttps://stackshare.io/postgres-js?utm_source=weekly_digest&utm_medium=email&utm_campaign=12242019&utm_content=new_toolling trimmedPathFunc
         let trimmedPath = await trimmedPathFunc(parsedUrl);
         // Get the query string as an object
         let queryStringObject = parsedUrl.query;
@@ -42,11 +62,11 @@ async function createServerFunc(req,res){
         let decoder = new StringDecoder('utf-8');
         let buffer = '';
 
-        req.on('data', (data)=> {
+        req.on('data', (data) => {
             buffer += decoder.write(data);
         });
 
-        req.on('end', ()=>{
+        req.on('end', () => {
             buffer += decoder.end();
             
             // Choose the handler this request should go to, If one is not found. use the notFound handler
@@ -63,7 +83,7 @@ async function createServerFunc(req,res){
             };
 
             // Route the request to the handler specified in the router
-            choosenHandler(data, function(statusCode,payload){
+            choosenHandler(data, (statusCode,payload) => {
                 // Use the status code called back by the handler, or default to 200
                 statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
 
@@ -89,29 +109,28 @@ async function createServerFunc(req,res){
     } catch (error) {
         console.error(error);
     }
-
-};
-
-let server = http.createServer(createServerFunc);
-
-
-// Start the server
-server.listen(config.port, ()=>console.log("The server is listening on port "+config.port+" in "+config.envName+" mode"));
+}
 
 // Define the handlers
 let handlers = {};
 
-// Sample handler
-handlers.sample = function(data, callback){
-    callback(406,{'name' : 'sample handler'});
+// Hello handler
+handlers.hello = (data,callback) => {
+    callback(200, {'message' : 'Hello World'});
+};
+
+// Ping handler
+handlers.ping = (data,callback) => {
+    callback(200);
 };
 
 // Not found handler
-handlers.notFound = function(data, callback){
+handlers.notFound = (data, callback) => {
     callback(404);
 };
 // Define a request router
 let router = {
-    'sample' : handlers.sample
+    'hello' : handlers.hello,
+    'ping' : handlers.ping
 }
 
