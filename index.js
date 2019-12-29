@@ -11,13 +11,13 @@ var workers = require('./lib/workers');
 var app = {};
 
 // Init function
-app.init = function () {
+app.init = function(){
 
-    // Start the server
-    server.init();
+  // Start the server
+  server.init();
 
-    // Start the workers
-    workers.init();
+  // Start the workers
+  workers.init();
 
 };
 
